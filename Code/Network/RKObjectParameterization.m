@@ -118,7 +118,7 @@
     } else if (value == nil) {
         // Serialize nil values as null
 //        transformedValue = [NSNull null];
-        transformedValue = @0;
+//        transformedValue = @0;
     } else {
         Class propertyClass = RKPropertyInspectorGetClassForPropertyAtKeyPathOfObject(mapping.sourceKeyPath, operation.sourceObject);
         if ([propertyClass isSubclassOfClass:NSClassFromString(@"__NSCFBoolean")] || [propertyClass isSubclassOfClass:NSClassFromString(@"NSCFBoolean")]) {
