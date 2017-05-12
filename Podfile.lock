@@ -1,11 +1,9 @@
 PODS:
-  - CocoaLumberjack (2.3.0):
-    - CocoaLumberjack/Default (= 2.3.0)
-    - CocoaLumberjack/Extensions (= 2.3.0)
-  - CocoaLumberjack/Core (2.3.0)
-  - CocoaLumberjack/Default (2.3.0):
-    - CocoaLumberjack/Core
-  - CocoaLumberjack/Extensions (2.3.0):
+  - CocoaLumberjack (3.2.0):
+    - CocoaLumberjack/Default (= 3.2.0)
+    - CocoaLumberjack/Extensions (= 3.2.0)
+  - CocoaLumberjack/Default (3.2.0)
+  - CocoaLumberjack/Extensions (3.2.0):
     - CocoaLumberjack/Default
   - Expecta (1.0.5)
   - ISO8601DateFormatterValueTransformer (0.6.1):
@@ -51,15 +49,15 @@ DEPENDENCIES:
 
 EXTERNAL SOURCES:
   RestKit:
-    :path: "."
+    :path: .
 
 SPEC CHECKSUMS:
-  CocoaLumberjack: 97fab7ee5f507fe54445cca7ea80f926729cfd15
+  CocoaLumberjack: 9b4aed7073d242f29cc2f62068d995faf67f703a
   Expecta: e1c022fcd33910b6be89c291d2775b3fe27a89fe
   ISO8601DateFormatterValueTransformer: 52da467d6ec899d6aedda8e48280ac92e8ee97e6
   OCHamcrest: e19857683e4eefab64b878668eac04c2f4567118
   OCMock: a6a7dc0e3997fb9f35d99f72528698ebf60d64f2
-  RestKit: a0244db34e14ed9cf059fcee2be6733cc162c34a
+  RestKit: 25d5f5a6df73c4ad08c7cd62d7433f8bea50709c
   RKCLLocationValueTransformer: 2cf0ea0fb7cd4bc70c56834fb92abc717c66f982
   RKValueTransformers: e5ed67e3811229b616fe01bddeeafe3bb337b1b9
   SOCKit: c7376ac262bea9115b8f749358f762522a47d392
@@ -68,4 +66,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 2fcdadbabd8d5e734e1a95ec3ca7e2ef9fa9a3f9
 
-COCOAPODS: 1.0.1
+COCOAPODS: 1.2.1
