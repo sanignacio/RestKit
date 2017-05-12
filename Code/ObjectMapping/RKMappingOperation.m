@@ -139,7 +139,7 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
 }
 
 @interface RKMappingSourceObject : NSObject
-- (id)initWithObject:(id)object parentObject:(id)parentObject rootObject:(id)rootObject metadata:(NSArray *)metadata;
+- (instancetype)initWithObject:(id)object parentObject:(id)parentObject rootObject:(id)rootObject metadata:(NSArray *)metadata;
 - (id)metadataValueForKey:(NSString *)key;
 - (id)metadataValueForKeyPath:(NSString *)keyPath;
 @end
@@ -152,13 +152,21 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
  in case it does this class provides the implementation.
  */
 @interface RKMetadataWrapper : NSObject
-- (id)initWithMappingSource:(RKMappingSourceObject *)source;
+- (instancetype)initWithMappingSource:(RKMappingSourceObject *)source NS_DESIGNATED_INITIALIZER;
 @property (nonatomic, strong) RKMappingSourceObject *mappingSource;
 @end
 
 @implementation RKMetadataWrapper
 
-- (id)initWithMappingSource:(RKMappingSourceObject *)source {
+- (instancetype)init
+{
+    @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                   reason:[NSString stringWithFormat:@"-init is not a valid initializer for the class %@, use designated initilizer -initWithMappingSource:", NSStringFromClass([self class])]
+                                 userInfo:nil];
+    return [self init];
+}
+
+- (instancetype)initWithMappingSource:(RKMappingSourceObject *)source {
     if (self = [super init]) {
         self.mappingSource = source;
     }
@@ -240,12 +248,15 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
 
 @implementation RKMappingSourceObject
 
-- (id)initWithObject:(id)object parentObject:(id)parentObject rootObject:(id)rootObject metadata:(NSArray *)metadata
+- (instancetype)initWithObject:(id)object parentObject:(id)parentObject rootObject:(id)rootObject metadata:(NSArray *)metadata
 {
-    self.object = object;
-    self.parentObject = parentObject;
-    self.rootObject = rootObject;
-    self.metadataList = metadata;
+    self = [self init];
+    if (self) {
+        _object = object;
+        _parentObject = parentObject;
+        _rootObject = rootObject;
+        _metadataList = metadata;
+    }
     return self;
 }
 
@@ -314,22 +325,27 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
     /* Using firstChar as a small performance enhancement -- one check can avoid several hasPrefix calls */
     unichar firstChar = [keyPath length] > 0 ? [keyPath characterAtIndex:0] : 0;
 
-    if (firstChar == 's' && [keyPath hasPrefix:RKSelfKeyPathPrefix]) {
-        NSString *selfKeyPath = [keyPath substringFromIndex:[RKSelfKeyPathPrefix length]];
-        return [_object valueForKeyPath:selfKeyPath];
-    } else if (firstChar != '@') {
-        return [_object valueForKeyPath:keyPath];
-    } else if ([keyPath hasPrefix:RKMetadataKeyPathPrefix]) {
-        NSString *metadataKeyPath = [keyPath substringFromIndex:[RKMetadataKeyPathPrefix length]];
-        return [self metadataValueForKeyPath:metadataKeyPath];
-    } else if ([keyPath hasPrefix:RKParentKeyPathPrefix]) {
-        NSString *parentKeyPath = [keyPath substringFromIndex:[RKParentKeyPathPrefix length]];
-        return [self.parentObject valueForKeyPath:parentKeyPath];
-    } else if ([keyPath hasPrefix:RKRootKeyPathPrefix]) {
-        NSString *rootKeyPath = [keyPath substringFromIndex:[RKRootKeyPathPrefix length]];
-        return [self.rootObject valueForKeyPath:rootKeyPath];
-    } else {
-        return [_object valueForKeyPath:keyPath];
+    @try {
+        if (firstChar == 's' && [keyPath hasPrefix:RKSelfKeyPathPrefix]) {
+            NSString *selfKeyPath = [keyPath substringFromIndex:[RKSelfKeyPathPrefix length]];
+            return [_object valueForKeyPath:selfKeyPath];
+        } else if (firstChar != '@') {
+            return [_object valueForKeyPath:keyPath];
+        } else if ([keyPath hasPrefix:RKMetadataKeyPathPrefix]) {
+            NSString *metadataKeyPath = [keyPath substringFromIndex:[RKMetadataKeyPathPrefix length]];
+            return [self metadataValueForKeyPath:metadataKeyPath];
+        } else if ([keyPath hasPrefix:RKParentKeyPathPrefix]) {
+            NSString *parentKeyPath = [keyPath substringFromIndex:[RKParentKeyPathPrefix length]];
+            return [self.parentObject valueForKeyPath:parentKeyPath];
+        } else if ([keyPath hasPrefix:RKRootKeyPathPrefix]) {
+            NSString *rootKeyPath = [keyPath substringFromIndex:[RKRootKeyPathPrefix length]];
+            return [self.rootObject valueForKeyPath:rootKeyPath];
+        } else {
+            return [_object valueForKeyPath:keyPath];
+        }
+    }
+    @catch (NSException *exception) {
+        return nil;
     }
 }
 
@@ -373,13 +389,13 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
 @property (nonatomic, strong) NSMutableSet *mutablePropertyMappings;
 @property (nonatomic, strong) NSMutableDictionary *mutableRelationshipMappingInfo;
 
-- (id)initWithObjectMapping:(RKObjectMapping *)objectMapping dynamicMapping:(RKDynamicMapping *)dynamicMapping;
+- (instancetype)initWithObjectMapping:(RKObjectMapping *)objectMapping dynamicMapping:(RKDynamicMapping *)dynamicMapping;
 - (void)addPropertyMapping:(RKPropertyMapping *)propertyMapping;
 @end
 
 @implementation RKMappingInfo
 
-- (id)initWithObjectMapping:(RKObjectMapping *)objectMapping dynamicMapping:(RKDynamicMapping *)dynamicMapping
+- (instancetype)initWithObjectMapping:(RKObjectMapping *)objectMapping dynamicMapping:(RKDynamicMapping *)dynamicMapping
 {
     self = [self init];
     if (self) {
@@ -408,12 +424,12 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
 
 - (void)addMappingInfo:(RKMappingInfo *)mappingInfo forRelationshipMapping:(RKRelationshipMapping *)relationshipMapping
 {
-    NSMutableArray *arrayOfMappingInfo = [self.mutableRelationshipMappingInfo objectForKey:relationshipMapping.destinationKeyPath];
+    NSMutableArray *arrayOfMappingInfo = (self.mutableRelationshipMappingInfo)[relationshipMapping.destinationKeyPath];
     if (arrayOfMappingInfo) {
         [arrayOfMappingInfo addObject:mappingInfo];
     } else {
         arrayOfMappingInfo = [NSMutableArray arrayWithObject:mappingInfo];
-        [self.mutableRelationshipMappingInfo setObject:arrayOfMappingInfo forKey:relationshipMapping.destinationKeyPath];
+        (self.mutableRelationshipMappingInfo)[relationshipMapping.destinationKeyPath] = arrayOfMappingInfo;
     }
 }
 
@@ -455,12 +471,12 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
 
 @implementation RKMappingOperation
 
-- (id)initWithSourceObject:(id)sourceObject destinationObject:(id)destinationObject mapping:(RKMapping *)objectOrDynamicMapping
+- (instancetype)initWithSourceObject:(id)sourceObject destinationObject:(id)destinationObject mapping:(RKMapping *)objectOrDynamicMapping
 {
     return [self initWithSourceObject:sourceObject destinationObject:destinationObject mapping:objectOrDynamicMapping metadataList:nil];
 }
 
-- (id)initWithSourceObject:(id)sourceObject destinationObject:(id)destinationObject mapping:(RKMapping *)objectOrDynamicMapping metadataList:(NSArray *)metadataList
+- (instancetype)initWithSourceObject:(id)sourceObject destinationObject:(id)destinationObject mapping:(RKMapping *)objectOrDynamicMapping metadataList:(NSArray *)metadataList
 {
     NSAssert(sourceObject != nil, @"Cannot perform a mapping operation without a sourceObject object");
     NSAssert(objectOrDynamicMapping != nil, @"Cannot perform a mapping operation without a mapping");
@@ -665,9 +681,14 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
 - (BOOL)transformValue:(id)inputValue toValue:(__autoreleasing id *)outputValue withPropertyMapping:(RKPropertyMapping *)propertyMapping error:(NSError *__autoreleasing *)error
 {
     if (! inputValue) {
-        *outputValue = nil;
-        // We only want to consider the transformation successful and assign nil if the mapping calls for it
-        return propertyMapping.objectMapping.assignsDefaultValueForMissingAttributes;
+        // We only want to consider the transformation successful and assign the default if the mapping calls for it
+        if (propertyMapping.objectMapping.assignsDefaultValueForMissingAttributes) {
+            *outputValue = [propertyMapping.objectMapping defaultValueForAttribute:propertyMapping.destinationKeyPath];
+            return YES;
+        } else {
+            *outputValue = nil;
+            return NO;
+        }
     }
     Class transformedValueClass = propertyMapping.propertyValueClass ?: [self.objectMapping classForKeyPath:propertyMapping.destinationKeyPath];
     if (! transformedValueClass) {
@@ -850,6 +871,11 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
         self.error = [NSError errorWithDomain:RKErrorDomain code:RKMappingErrorInvalidAssignmentPolicy userInfo:userInfo];
         return NO;
     }
+    
+    // Remove existing destination entity before mapping the new one
+    if (relationshipMapping.assignmentPolicy == RKAssignmentPolicyReplace && ![self applyReplaceAssignmentPolicyForRelationshipMapping:relationshipMapping]) {
+        return NO;
+    }
 
     id parentSourceObject = [self parentObjectForRelationshipMapping:relationshipMapping];
     id destinationObject = [self destinationObjectForMappingRepresentation:value parentRepresentation:parentSourceObject withMapping:relationshipMapping.mapping inRelationship:relationshipMapping];
@@ -863,10 +889,6 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
 
     // If the relationship has changed, set it
     if ([self shouldSetValue:&destinationObject forKeyPath:destinationKeyPath usingMapping:relationshipMapping]) {
-        if (! [self applyReplaceAssignmentPolicyForRelationshipMapping:relationshipMapping]) {
-            return NO;
-        }
-        
         RKLogTrace(@"Mapped relationship object from keyPath '%@' to '%@'. Value: %@", relationshipMapping.sourceKeyPath, destinationKeyPath, destinationObject);
         [self.destinationObject setValue:destinationObject forKeyPath:destinationKeyPath];
     } else {
@@ -1049,7 +1071,7 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
                 RKLogDebug(@"Collection mapping forced for NSDictionary, mapping each key/value independently...");
                 NSArray *objectsToMap = [NSMutableArray arrayWithCapacity:[value count]];
                 for (id key in value) {
-                    NSDictionary *dictionaryToMap = [NSDictionary dictionaryWithObject:[value valueForKey:key] forKey:key];
+                    NSDictionary *dictionaryToMap = @{key: [value valueForKey:key]};
                     [(NSMutableArray *)objectsToMap addObject:dictionaryToMap];
                 }
                 value = objectsToMap;
@@ -1200,18 +1222,33 @@ static NSArray *RKInsertInMetadataList(NSArray *list, id metadata1, id metadata2
         }
     }
     
-    BOOL canSkipMapping = [dataSource respondsToSelector:@selector(mappingOperationShouldSkipPropertyMapping:)] && [dataSource mappingOperationShouldSkipPropertyMapping:self];
-    if (! canSkipMapping) {
-        [self applyNestedMappings];
-        if ([self isCancelled]) return;
-        BOOL mappedSimpleAttributes = [self applyAttributeMappings:[self simpleAttributeMappings]];
-        if ([self isCancelled]) return;
-        BOOL mappedRelationships = [[self relationshipMappings] count] ? [self applyRelationshipMappings] : NO;
-        if ([self isCancelled]) return;
-        // NOTE: We map key path attributes last to allow you to map across the object graphs for objects created/updated by the relationship mappings
-        BOOL mappedKeyPathAttributes = [self applyAttributeMappings:[self keyPathAttributeMappings]];
-        
-        if (!mappedSimpleAttributes && !mappedRelationships && !mappedKeyPathAttributes) {
+    BOOL canSkipAttributes = [dataSource respondsToSelector:@selector(mappingOperationShouldSkipAttributeMapping:)] && [dataSource mappingOperationShouldSkipAttributeMapping:self];
+    BOOL canSkipRelationships = [dataSource respondsToSelector:@selector(mappingOperationShouldSkipRelationshipMapping:)] && [dataSource mappingOperationShouldSkipRelationshipMapping:self];
+    if ([dataSource respondsToSelector:@selector(mappingOperationShouldSkipRelationshipMapping:)]) {
+        canSkipRelationships = [dataSource mappingOperationShouldSkipRelationshipMapping:self];
+    }
+    if ([dataSource respondsToSelector:@selector(mappingOperationShouldSkipAttributeMapping:)]) {
+        canSkipAttributes = [dataSource mappingOperationShouldSkipAttributeMapping:self];
+    }
+    if (!canSkipRelationships || !canSkipAttributes) {
+        BOOL foundNoSimpleAttributes = NO;
+        BOOL foundNoRelationships = NO;
+        BOOL foundNoKeyPathAttributes = NO;
+        if (!canSkipAttributes) {
+            [self applyNestedMappings];
+            if ([self isCancelled]) return;
+            foundNoSimpleAttributes = ![self applyAttributeMappings:[self simpleAttributeMappings]];
+        }
+        if (!canSkipRelationships) {
+            if ([self isCancelled]) return;
+            foundNoRelationships = [[self relationshipMappings] count] ? ![self applyRelationshipMappings] : YES;
+        }
+        if (!canSkipAttributes) {
+            if ([self isCancelled]) return;
+            // NOTE: We map key path attributes last to allow you to map across the object graphs for objects created/updated by the relationship mappings
+            foundNoKeyPathAttributes = ![self applyAttributeMappings:[self keyPathAttributeMappings]];
+        }
+        if (foundNoSimpleAttributes && foundNoRelationships && foundNoKeyPathAttributes) {
             // We did not find anything to do
             RKLogDebug(@"Mapping operation did not find any mappable values for the attribute and relationship mappings in the given object representation");
             NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: @"No mappable values found for any of the attributes or relationship mappings" };

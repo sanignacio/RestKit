@@ -18,6 +18,10 @@
 //  limitations under the License.
 //
 
+#if __has_include("CoreData.h")
+#import <CoreData/CoreData.h>
+#endif
+
 #import "RKObjectMapping.h"
 #import "RKAttributeMapping.h"
 
@@ -108,7 +112,7 @@
  */
 - (void)mappingOperation:(RKMappingOperation *)operation didSelectObjectMapping:(RKObjectMapping *)objectMapping forDynamicMapping:(RKDynamicMapping *)dynamicMapping;
 
-#ifdef _COREDATADEFINES_H
+#if __has_include("CoreData.h")
 
 ///----------------------------------------
 /// @name Tracking Relationship Connections
@@ -236,7 +240,7 @@
  @param objectOrDynamicMapping An instance of `RKObjectMapping` or `RKDynamicMapping` defining how the mapping is to be performed.
  @return The receiver, initialized with a source object, a destination object, and a mapping.
  */
-- (id)initWithSourceObject:(id)sourceObject destinationObject:(id)destinationObject mapping:(RKMapping *)objectOrDynamicMapping;
+- (instancetype)initWithSourceObject:(id)sourceObject destinationObject:(id)destinationObject mapping:(RKMapping *)objectOrDynamicMapping;
 
 /**
  Initializes the receiver with a source object, a destination object and an object mapping with which to perform an object mapping, and metadata information to be made available to the mapping.
@@ -247,7 +251,7 @@
  @param metadataList A list of objects (usually dictionaries) which provide metadata to the operation, available via the @metadata key in mapping paths.  Each object should respond to -valueForKeyPath:, and return nil if the requested key path is not represented in the object (in which case the following object in the list will be consulted).
  @return The receiver, initialized with a source object, a destination object, and a mapping.
  */
-- (id)initWithSourceObject:(id)sourceObject destinationObject:(id)destinationObject mapping:(RKMapping *)objectOrDynamicMapping metadataList:(NSArray *)metadataList;
+- (instancetype)initWithSourceObject:(id)sourceObject destinationObject:(id)destinationObject mapping:(RKMapping *)objectOrDynamicMapping metadataList:(NSArray *)metadataList;
 
 ///--------------------------------------
 /// @name Accessing Mapping Configuration

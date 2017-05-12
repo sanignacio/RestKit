@@ -18,7 +18,7 @@
 //  limitations under the License.
 //
 
-#import "AFHTTPClient.h"
+#import "AFRKHTTPClient.h"
 #import "RKTestFactory.h"
 #import "RKLog.h"
 #import "RKObjectManager.h"
@@ -26,11 +26,9 @@
 #import "RKMIMETypeSerialization.h"
 #import "RKObjectRequestOperation.h"
 
-#ifdef _COREDATADEFINES_H
-#if __has_include("RKCoreData.h")
+#if __has_include("CoreData.h")
 #define RKCoreDataIncluded
 #import "RKManagedObjectStore.h"
-#endif
 #endif
 
 // Expose MIME Type singleton and initialization routine
@@ -72,7 +70,7 @@
     return sharedFactory;
 }
 
-- (id)init
+- (instancetype)init
 {
     self = [super init];
     if (self) {
@@ -87,12 +85,12 @@
 
 - (void)defineFactory:(NSString *)factoryName withBlock:(id (^)())block
 {
-    [self.factoryBlocks setObject:[block copy] forKey:factoryName];
+    (self.factoryBlocks)[factoryName] = [block copy];
 }
 
 - (id)objectFromFactory:(NSString *)factoryName properties:(NSDictionary *)properties
 {
-    id (^block)() = [self.factoryBlocks objectForKey:factoryName];
+    id (^block)() = (self.factoryBlocks)[factoryName];
     NSAssert(block, @"No factory is defined with the name '%@'", factoryName);
 
     id object = block();
@@ -102,10 +100,10 @@
 
 - (id)sharedObjectFromFactory:(NSString *)factoryName
 {
-    id sharedObject = [self.sharedObjectsByFactoryName objectForKey:factoryName];
+    id sharedObject = (self.sharedObjectsByFactoryName)[factoryName];
     if (!sharedObject) {
         sharedObject = [self objectFromFactory:factoryName properties:nil];
-        [self.sharedObjectsByFactoryName setObject:sharedObject forKey:factoryName];
+        (self.sharedObjectsByFactoryName)[factoryName] = sharedObject;
     }
     return sharedObject;
 }
@@ -113,9 +111,9 @@
 - (void)defineDefaultFactories
 {
     [self defineFactory:RKTestFactoryDefaultNamesClient withBlock:^id {
-        __block AFHTTPClient *client;
+        __block AFRKHTTPClient *client;
         RKLogSilenceComponentWhileExecutingBlock(RKlcl_cRestKitSupport, ^{
-            client = [AFHTTPClient clientWithBaseURL:self.baseURL];
+            client = [AFRKHTTPClient clientWithBaseURL:self.baseURL];
         });
 
         return client;
@@ -257,9 +255,6 @@
         [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
     }
 
-    // Clear the NSURLCache
-    [[NSURLCache sharedURLCache] removeAllCachedResponses];
-
     if ([RKTestFactory sharedFactory].setUpBlock) [RKTestFactory sharedFactory].setUpBlock();
 }
 
@@ -269,7 +264,6 @@
 
     // Cancel any network operations and clear the cache
     [[RKObjectManager sharedManager].operationQueue cancelAllOperations];
-    [[NSURLCache sharedURLCache] removeAllCachedResponses];
 
     // Cancel any object mapping in the response mapping queue
     [[RKObjectRequestOperation responseMappingQueue] cancelAllOperations];
@@ -277,7 +271,7 @@
 #ifdef RKCoreDataIncluded
     // Ensure the existing defaultStore is shut down
     [[NSNotificationCenter defaultCenter] removeObserver:[RKManagedObjectStore defaultStore]];
-    
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wundeclared-selector"
     if ([[RKManagedObjectStore defaultStore] respondsToSelector:@selector(stopIndexingPersistentStoreManagedObjectContext)]) {

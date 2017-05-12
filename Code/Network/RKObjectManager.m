@@ -19,6 +19,8 @@
 //
 
 #import <objc/runtime.h>
+#import "AFRKNetworking.h"
+
 #import "RKObjectManager.h"
 #import "RKObjectParameterization.h"
 #import "RKRequestDescriptor.h"
@@ -37,17 +39,15 @@
 #import "RKRoute.h"
 #import "RKRouteSet.h"
 
-#ifdef _COREDATADEFINES_H
-#if __has_include("RKCoreData.h")
-#define RKCoreDataIncluded
-#import "RKManagedObjectStore.h"
-#import "RKManagedObjectRequestOperation.h"
-#endif
+#if __has_include("CoreData.h")
+#   define RKCoreDataIncluded
+#   import "RKManagedObjectStore.h"
+#   import "RKManagedObjectRequestOperation.h"
 #endif
 
 #if !__has_feature(objc_arc)
-#error RestKit must be built with ARC.
-// You can turn on ARC for only RestKit files by adding "-fobjc-arc" to the build phase for each of its files.
+#error RestKit must be built with ARC. \
+You can turn on ARC for only RestKit files by adding "-fobjc-arc" to the build phase for each of its files.
 #endif
 
 //////////////////////////////////
@@ -112,7 +112,7 @@ extern NSString *RKStringDescribingRequestMethod(RKRequestMethod method);
 
 @implementation RKObjectParameters
 
-- (id)init
+- (instancetype)init
 {
     self = [super init];
     if (self) {
@@ -124,26 +124,26 @@ extern NSString *RKStringDescribingRequestMethod(RKRequestMethod method);
 - (void)addParameters:(NSDictionary *)parameters atRootKeyPath:(NSString *)rootKeyPath inArray:(BOOL)inArray
 {
     id rootKey = rootKeyPath ?: [NSNull null];
-    id nonNestedParameters = rootKeyPath ? [parameters objectForKey:rootKeyPath] : parameters;
-    id value = [self.parameters objectForKey:rootKey];
+    id nonNestedParameters = rootKeyPath ? parameters[rootKeyPath] : parameters;
+    id value = (self.parameters)[rootKey];
     if (value) {
         if ([value isKindOfClass:[NSMutableArray class]]) {
             [value addObject:nonNestedParameters];
         } else if ([value isKindOfClass:[NSDictionary class]]) {
             NSMutableArray *mutableArray = [NSMutableArray arrayWithObjects:value, nonNestedParameters, nil];
-            [self.parameters setObject:mutableArray forKey:rootKey];
+            (self.parameters)[rootKey] = mutableArray;
         } else {
             [NSException raise:NSInvalidArgumentException format:@"Unexpected argument of type '%@': expected an NSDictionary or NSArray.", [value class]];
         }
     } else {
-        [self.parameters setObject:(inArray ? @[ nonNestedParameters ] : nonNestedParameters) forKey:rootKey];
+        (self.parameters)[rootKey] = (inArray ? @[ nonNestedParameters ] : nonNestedParameters);
     }
 }
 
 - (id)requestParameters
 {
     if ([self.parameters count] == 0) return nil;
-    id valueAtNullKey = [self.parameters objectForKey:[NSNull null]];
+    id valueAtNullKey = (self.parameters)[[NSNull null]];
     if (valueAtNullKey) {
         if ([self.parameters count] == 1) return valueAtNullKey;
 
@@ -162,7 +162,7 @@ extern NSString *RKStringDescribingRequestMethod(RKRequestMethod method);
 
 @property (nonatomic, readonly) NSSet *mappings;
 
-- (id)initWithMapping:(RKMapping *)mapping;
+- (instancetype)initWithMapping:(RKMapping *)mapping NS_DESIGNATED_INITIALIZER;
 
 @end
 
@@ -172,7 +172,15 @@ extern NSString *RKStringDescribingRequestMethod(RKRequestMethod method);
 
 @implementation RKMappingGraphVisitor
 
-- (id)initWithMapping:(RKMapping *)mapping
+- (instancetype)init
+{
+    @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                   reason:[NSString stringWithFormat:@"-init is not a valid initializer for the class %@, use designated initilizer -initWithMapping:", NSStringFromClass([self class])]
+                                 userInfo:nil];
+    return [self init];
+}
+
+- (instancetype)initWithMapping:(RKMapping *)mapping
 {
     self = [super init];
     if (self) {
@@ -308,18 +316,18 @@ static BOOL RKDoesArrayOfResponseDescriptorsContainMappingForClass(NSArray *resp
     return NO;
 }
 
-static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFHTTPClientParameterEncoding encoding)
+static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFRKHTTPClientParameterEncoding encoding)
 {
     switch (encoding) {
-        case AFFormURLParameterEncoding:
+        case AFRKFormURLParameterEncoding:
             return RKMIMETypeFormURLEncoded;
             break;
             
-        case AFJSONParameterEncoding:
+        case AFRKJSONParameterEncoding:
             return RKMIMETypeJSON;
             break;
             
-        case AFPropertyListParameterEncoding:
+        case AFRKPropertyListParameterEncoding:
             break;
             
         default:
@@ -330,7 +338,7 @@ static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFHTTPClientParamet
     return RKMIMETypeFormURLEncoded;
 }
 
-@interface AFHTTPClient ()
+@interface AFRKHTTPClient ()
 @property (readonly, nonatomic, strong) NSURLCredential *defaultCredential;
 @end
 
@@ -348,7 +356,15 @@ static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFHTTPClientParamet
 
 @implementation RKObjectManager
 
-- (id)initWithHTTPClient:(AFHTTPClient *)client
+- (instancetype)init
+{
+    @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                   reason:[NSString stringWithFormat:@"-init is not a valid initializer for the class %@, use designated initilizer -initWithHTTPClient:", NSStringFromClass([self class])]
+                                 userInfo:nil];
+    return [self init];
+}
+
+- (instancetype)initWithHTTPClient:(AFRKHTTPClient *)client
 {
     self = [super init];
     if (self) {
@@ -384,8 +400,8 @@ static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFHTTPClientParamet
 
 + (RKObjectManager *)managerWithBaseURL:(NSURL *)baseURL
 {
-    RKObjectManager *manager = [[self alloc] initWithHTTPClient:[AFHTTPClient clientWithBaseURL:baseURL]];
-    [manager.HTTPClient registerHTTPOperationClass:[AFJSONRequestOperation class]];
+    RKObjectManager *manager = [[self alloc] initWithHTTPClient:[AFRKHTTPClient clientWithBaseURL:baseURL]];
+    [manager.HTTPClient registerHTTPOperationClass:[AFRKJSONRequestOperation class]];
     [manager setAcceptHeaderWithMIMEType:RKMIMETypeJSON];
     manager.requestSerializationMIMEType = RKMIMETypeFormURLEncoded;
     return manager;
@@ -418,7 +434,7 @@ static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFHTTPClientParamet
     NSMutableURLRequest* request;
     if (parameters && !([method isEqualToString:@"GET"] || [method isEqualToString:@"HEAD"] || [method isEqualToString:@"DELETE"])) {
         // NOTE: If the HTTP client has been subclasses, then the developer may be trying to perform signing on the request
-        NSDictionary *parametersForClient = [self.HTTPClient isMemberOfClass:[AFHTTPClient class]] ? nil : parameters;
+        NSDictionary *parametersForClient = [self.HTTPClient isMemberOfClass:[AFRKHTTPClient class]] ? nil : parameters;
         request = [self.HTTPClient requestWithMethod:method path:path parameters:parametersForClient];
 		
         NSError *error = nil;
@@ -499,7 +515,7 @@ static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFHTTPClientParamet
                                                  method:(RKRequestMethod)method
                                                    path:(NSString *)path
                                              parameters:(NSDictionary *)parameters
-                              constructingBodyWithBlock:(void (^)(id <AFMultipartFormData> formData))block
+                              constructingBodyWithBlock:(void (^)(id <AFRKMultipartFormData> formData))block
 {
     NSString *requestPath = (path) ? path : [[self.router URLForObject:object method:method] relativeString];
     id requestParameters = [self mergedParametersWithObject:object method:method parameters:parameters];
@@ -552,11 +568,11 @@ static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFHTTPClientParamet
 
 #pragma mark - Object Request Operations
 
-- (void)copyStateFromHTTPClientToHTTPRequestOperation:(AFHTTPRequestOperation *)operation
+- (void)copyStateFromHTTPClientToHTTPRequestOperation:(AFRKHTTPRequestOperation *)operation
 {
     operation.credential = self.HTTPClient.defaultCredential;
     operation.allowsInvalidSSLCertificate = self.HTTPClient.allowsInvalidSSLCertificate;
-#ifdef _AFNETWORKING_PIN_SSL_CERTIFICATES_
+#ifdef _AFRKNETWORKING_PIN_SSL_CERTIFICATES_
     operation.SSLPinningMode = self.HTTPClient.defaultSSLPinningMode;
 #endif
 }
@@ -627,7 +643,11 @@ static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFHTTPClientParamet
             return operation;
         }
         path = [URL relativeString];
-        routingMetadata = @{ @"routing": @{ @"parameters": interpolatedParameters, @"route": route } };
+        
+        routingMetadata = @{ @"routing": @{ @"parameters": interpolatedParameters, @"route": route },
+                             @"query": @{ @"parameters": parameters ?: @{} } };
+    } else if (parameters) {
+        routingMetadata = @{ @"query": @{ @"parameters": parameters } };
     }
     
 #ifdef RKCoreDataIncluded
@@ -695,7 +715,10 @@ static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFHTTPClientParamet
     NSURL *URL = [self URLWithRoute:route object:object interpolatedParameters:&interpolatedParameters];
     NSAssert(URL, @"Failed to generate URL for relationship named '%@' for object: %@", relationshipName, object);
     RKObjectRequestOperation *operation = [self appropriateObjectRequestOperationWithObject:nil method:RKRequestMethodGET path:[URL relativeString] parameters:parameters];
-    operation.mappingMetadata = @{ @"routing": @{ @"parameters": interpolatedParameters, @"route": route } };
+    
+    operation.mappingMetadata = @{ @"routing": @{ @"parameters": interpolatedParameters, @"route": route },
+                                   @"query": @{ @"parameters": parameters ?: @{} } };
+    
     [operation setCompletionBlockWithSuccess:success failure:failure];
     [self enqueueObjectRequestOperation:operation];
 }
@@ -714,10 +737,12 @@ static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFHTTPClientParamet
     NSAssert(route.method & RKRequestMethodGET, @"Expected route named '%@' to specify a GET, but it does not", routeName);
     
     RKObjectRequestOperation *operation = [self appropriateObjectRequestOperationWithObject:nil method:RKRequestMethodGET path:[URL relativeString] parameters:parameters];
-    operation.mappingMetadata = @{ @"routing": @{ @"parameters": interpolatedParameters, @"route": route } };
+    
+    operation.mappingMetadata = @{ @"routing": @{ @"parameters": interpolatedParameters, @"route": route },
+                                   @"query": @{ @"parameters": parameters ?: @{} } };
+    
     [operation setCompletionBlockWithSuccess:success failure:failure];
     [self enqueueObjectRequestOperation:operation];
-
 }
 
 - (void)getObjectsAtPath:(NSString *)path
@@ -793,9 +818,14 @@ static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFHTTPClientParamet
 
 - (RKPaginator *)paginatorWithPathPattern:(NSString *)pathPattern
 {
+    return [self paginatorWithPathPattern:pathPattern parameters:nil];
+}
+
+- (RKPaginator *)paginatorWithPathPattern:(NSString *)pathPattern parameters:(NSDictionary *)parameters
+{
     NSAssert(self.paginationMapping, @"Cannot instantiate a paginator when `paginationMapping` is nil.");
-    NSMutableURLRequest *request = [self requestWithMethod:@"GET" path:pathPattern parameters:nil];
-    RKPaginator *paginator = [[RKPaginator alloc] initWithRequest:request paginationMapping:self.paginationMapping responseDescriptors:self.responseDescriptors];
+    NSMutableURLRequest *request = [self requestWithMethod:@"GET" path:pathPattern parameters:parameters];
+    RKPaginator *paginator = [[self.paginationMapping.objectClass alloc] initWithRequest:request paginationMapping:self.paginationMapping responseDescriptors:self.responseDescriptors];
 #ifdef RKCoreDataIncluded
     paginator.managedObjectContext = self.managedObjectStore.mainQueueManagedObjectContext;
     paginator.managedObjectCache = self.managedObjectStore.managedObjectCache;
@@ -990,13 +1020,13 @@ static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFHTTPClientParamet
 @end
 
 #ifdef _SYSTEMCONFIGURATION_H
-NSString *RKStringFromNetworkReachabilityStatus(AFNetworkReachabilityStatus networkReachabilityStatus)
+NSString *RKStringFromNetworkReachabilityStatus(AFRKNetworkReachabilityStatus networkReachabilityStatus)
 {
     switch (networkReachabilityStatus) {
-        case AFNetworkReachabilityStatusNotReachable:     return @"Not Reachable";
-        case AFNetworkReachabilityStatusReachableViaWiFi: return @"Reachable via WiFi";
-        case AFNetworkReachabilityStatusReachableViaWWAN: return @"Reachable via WWAN";
-        case AFNetworkReachabilityStatusUnknown:          return @"Reachability Unknown";
+        case AFRKNetworkReachabilityStatusNotReachable:     return @"Not Reachable";
+        case AFRKNetworkReachabilityStatusReachableViaWiFi: return @"Reachable via WiFi";
+        case AFRKNetworkReachabilityStatusReachableViaWWAN: return @"Reachable via WWAN";
+        case AFRKNetworkReachabilityStatusUnknown:          return @"Reachability Unknown";
         default:                                          break;
     }
     return nil;

@@ -52,7 +52,7 @@ static NSString *RKFailureReasonErrorStringForMappingNotFoundError(id representa
 
 // Duplicating interface from `RKMappingOperation.m`
 @interface RKMappingSourceObject : NSObject
-- (id)initWithObject:(id)object parentObject:(id)parentObject rootObject:(id)rootObject metadata:(NSArray *)metadata;
+- (instancetype)initWithObject:(id)object parentObject:(id)parentObject rootObject:(id)rootObject metadata:(NSArray *)metadata;
 @end
 
 @interface RKMappingOperation (Private)
@@ -80,7 +80,12 @@ static NSString *RKFailureReasonErrorStringForMappingNotFoundError(id representa
 
 @implementation RKMapperOperation
 
-- (id)initWithRepresentation:(id)representation mappingsDictionary:(NSDictionary *)mappingsDictionary;
+- (instancetype)init
+{
+    return [self initWithRepresentation:nil mappingsDictionary:nil];
+}
+
+- (instancetype)initWithRepresentation:(id)representation mappingsDictionary:(NSDictionary *)mappingsDictionary;
 {
     self = [super init];
     if (self) {
@@ -215,7 +220,7 @@ static NSString *RKFailureReasonErrorStringForMappingNotFoundError(id representa
             RKLogDebug(@"Collection mapping forced for NSDictionary, mapping each key/value independently...");
             objectsToMap = [NSMutableArray arrayWithCapacity:[representations count]];
             for (id key in representations) {
-                NSDictionary *dictionaryToMap = [NSDictionary dictionaryWithObject:[representations valueForKey:key] forKey:key];
+                NSDictionary *dictionaryToMap = @{key: [representations valueForKey:key]};
                 [(NSMutableArray *)objectsToMap addObject:dictionaryToMap];
             }
         } else {
@@ -229,6 +234,8 @@ static NSString *RKFailureReasonErrorStringForMappingNotFoundError(id representa
     NSArray *metadataList = [NSArray arrayWithObjects:metadata, self.metadata, nil];
     NSMutableArray *mappedObjects = [NSMutableArray arrayWithCapacity:[representations count]];
     [objectsToMap enumerateObjectsUsingBlock:^(id mappableObject, NSUInteger index, BOOL *stop) {
+        if (mappableObject == [NSNull null]) { return; }
+        
         id destinationObject = [self objectForRepresentation:mappableObject withMapping:mapping];
         if (destinationObject) {
             mappingData.collectionIndex = index;
@@ -271,7 +278,7 @@ static NSString *RKFailureReasonErrorStringForMappingNotFoundError(id representa
         
         if (mappingOperation.mappingInfo) {
             id infoKey = keyPath ?: [NSNull null];
-            NSMutableArray *infoForKeyPath = [self.mutableMappingInfo objectForKey:infoKey];
+            NSMutableArray *infoForKeyPath = (self.mutableMappingInfo)[infoKey];
             if (infoForKeyPath) {
                 [infoForKeyPath addObject:mappingOperation.mappingInfo];
             } else {
@@ -368,7 +375,7 @@ static NSString *RKFailureReasonErrorStringForMappingNotFoundError(id representa
 
             // Found something to map
             foundMappable = YES;
-            RKMapping *mapping = [mappingsByKeyPath objectForKey:keyPath];
+            RKMapping *mapping = mappingsByKeyPath[keyPath];
             if ([self.delegate respondsToSelector:@selector(mapper:didFindRepresentationOrArrayOfRepresentations:atKeyPath:)]) {
                 [self.delegate mapper:self didFindRepresentationOrArrayOfRepresentations:nestedRepresentation atKeyPath:RKDelegateKeyPathFromKeyPath(keyPath)];
             }
@@ -376,7 +383,7 @@ static NSString *RKFailureReasonErrorStringForMappingNotFoundError(id representa
             mappingResult = [self mapRepresentationOrRepresentations:nestedRepresentation atKeyPath:keyPath usingMapping:mapping];
 
             if (mappingResult) {
-                [results setObject:mappingResult forKey:keyPath];
+                results[keyPath] = mappingResult;
             }
         }
     }

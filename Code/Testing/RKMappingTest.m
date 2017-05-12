@@ -26,15 +26,13 @@
 #import "RKLog.h"
 
 // Core Data
-#ifdef _COREDATADEFINES_H
-#if __has_include("RKCoreData.h")
+#if __has_include("CoreData.h")
 #define RKCoreDataIncluded
 #import "RKEntityMapping.h"
 #import "RKConnectionDescription.h"
 #import "RKConnectionTestExpectation.h"
 #import "RKFetchRequestManagedObjectCache.h"
 #import "RKManagedObjectMappingOperationDataSource.h"
-#endif
 #endif
 
 // Error Constants
@@ -135,6 +133,7 @@ NSString * const RKMappingTestVerificationFailureException = @"RKMappingTestVeri
 @property (nonatomic, strong, readwrite) RKMapping *mapping;
 @property (nonatomic, strong, readwrite) id sourceObject;
 @property (nonatomic, strong, readwrite) id destinationObject;
+@property (nonatomic, strong) NSArray *metadataList;
 @property (nonatomic, strong) NSMutableArray *expectations;
 @property (nonatomic, strong) NSMutableArray *events;
 @property (nonatomic, assign, getter = hasPerformedMapping) BOOL performedMapping;
@@ -149,24 +148,43 @@ NSString * const RKMappingTestVerificationFailureException = @"RKMappingTestVeri
 
 + (instancetype)testForMapping:(RKMapping *)mapping sourceObject:(id)sourceObject destinationObject:(id)destinationObject
 {
+    return [[self class] testForMapping:mapping sourceObject:sourceObject destinationObject:destinationObject metadataList:nil];
+}
+
++ (instancetype)testForMapping:(RKMapping *)mapping sourceObject:(id)sourceObject destinationObject:(id)destinationObject metadataList:(NSArray *)metadataList
+{
     return [[self alloc] initWithMapping:mapping sourceObject:sourceObject destinationObject:destinationObject];
 }
 
-- (id)initWithMapping:(RKMapping *)mapping sourceObject:(id)sourceObject destinationObject:(id)destinationObject
+- (instancetype)init
+{
+    @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                   reason:[NSString stringWithFormat:@"-init is not a valid initializer for the class %@, use designated initilizer -initWithMapping", NSStringFromClass([self class])]
+                                 userInfo:nil];
+    return [self init];
+}
+
+- (instancetype)initWithMapping:(RKMapping *)mapping sourceObject:(id)sourceObject destinationObject:(id)destinationObject
+{
+    return [self initWithMapping:mapping sourceObject:sourceObject destinationObject:destinationObject metadataList:nil];
+}
+
+- (instancetype)initWithMapping:(RKMapping *)mapping sourceObject:(id)sourceObject destinationObject:(id)destinationObject metadataList:(NSArray *)metadataList
 {
     NSAssert(sourceObject != nil, @"Cannot perform a mapping operation without a sourceObject object");
     NSAssert(mapping != nil, @"Cannot perform a mapping operation without a mapping");
-
+    
     self = [super init];
     if (self) {
         self.sourceObject = sourceObject;
         self.destinationObject = destinationObject;
+        self.metadataList = metadataList;
         self.mapping = mapping;
         self.expectations = [NSMutableArray new];
         self.events = [NSMutableArray new];
         self.performedMapping = NO;
     }
-
+    
     return self;
 }
 
@@ -216,8 +234,8 @@ NSString * const RKMappingTestVerificationFailureException = @"RKMappingTestVeri
                           reason:(NSString *)reason
 {
     NSMutableDictionary *fullUserInfo = [userInfo mutableCopy];
-    [fullUserInfo setObject:description forKey:NSLocalizedDescriptionKey];
-    [fullUserInfo setObject:reason forKey:NSLocalizedFailureReasonErrorKey];
+    fullUserInfo[NSLocalizedDescriptionKey] = description;
+    fullUserInfo[NSLocalizedFailureReasonErrorKey] = reason;
     return [NSError errorWithDomain:RKMappingTestErrorDomain code:errorCode userInfo:fullUserInfo];
 }
 
@@ -241,22 +259,27 @@ NSString * const RKMappingTestVerificationFailureException = @"RKMappingTestVeri
                     [mutableUserInfo setValue:blockError forKey:NSUnderlyingErrorKey];
                     NSString *reason = [NSString stringWithFormat:@"expected to %@ with value %@ '%@', but it did not",
                                         expectation, [event.value class], event.value];
-                    *error = [self errorForExpectation:expectation
-                                              withCode:RKMappingTestEvaluationBlockError
-                                              userInfo:mutableUserInfo
-                                           description:[blockError localizedDescription]
-                                                reason:reason];
                     
-                    *error = blockError;
+                    if (error) {
+                        *error = [self errorForExpectation:expectation
+                                                  withCode:RKMappingTestEvaluationBlockError
+                                                  userInfo:mutableUserInfo
+                                               description:[blockError localizedDescription]
+                                                    reason:reason];
+                        
+                        *error = blockError;
+                    }
                 } else {
                     NSString *description = [NSString stringWithFormat:@"evaluation block returned `NO` for %@ value '%@'", [event.value class], event.value];
                     NSString *reason = [NSString stringWithFormat:@"expected to %@ with value %@ '%@', but it did not",
                                         expectation, [event.value class], event.value];
-                    *error = [self errorForExpectation:expectation
-                                              withCode:RKMappingTestEvaluationBlockError
-                                              userInfo:userInfo
-                                           description:description
-                                                reason:reason];
+                    if (error) {
+                        *error = [self errorForExpectation:expectation
+                                                  withCode:RKMappingTestEvaluationBlockError
+                                                  userInfo:userInfo
+                                               description:description
+                                                    reason:reason];
+                    }
                 }
             }
         } else if (propertyExpectation.value) {
@@ -267,11 +290,13 @@ NSString * const RKMappingTestVerificationFailureException = @"RKMappingTestVeri
                 NSString *description = [NSString stringWithFormat:@"mapped to unexpected %@ value '%@'", [event.value class], event.value];
                 NSString *reason = [NSString stringWithFormat:@"expected to %@, but instead got %@ '%@'",
                                     expectation, [event.value class], event.value];
-                if (error) *error = [self errorForExpectation:expectation
-                                                     withCode:RKMappingTestValueInequalityError
-                                                     userInfo:userInfo
-                                                  description:description
-                                                       reason:reason];
+                if (error) {
+                    *error = [self errorForExpectation:expectation
+                                              withCode:RKMappingTestValueInequalityError
+                                              userInfo:userInfo
+                                           description:description
+                                                reason:reason];
+                }
             }
         } else if (propertyExpectation.mapping) {
             if ([event.propertyMapping isKindOfClass:[RKRelationshipMapping class]]) {
@@ -283,21 +308,25 @@ NSString * const RKMappingTestVerificationFailureException = @"RKMappingTestVeri
                     NSString *description = [NSString stringWithFormat:@"mapped using unexpected mapping: %@", relationshipMapping];
                     NSString *reason = [NSString stringWithFormat:@"expected to %@, but was instead mapped using: %@",
                                         expectation, relationshipMapping];
-                    if (error) *error = [self errorForExpectation:expectation
-                                                         withCode:RKMappingTestMappingMismatchError
-                                                         userInfo:userInfo
-                                                      description:description
-                                                           reason:reason];
+                    if (error) {
+                        *error = [self errorForExpectation:expectation
+                                                  withCode:RKMappingTestMappingMismatchError
+                                                  userInfo:userInfo
+                                               description:description
+                                                    reason:reason];
+                    }
                 }
             } else {
                 NSString *description = [NSString stringWithFormat:@"expected a property mapping of type `RKRelationshipMapping` but instead got a `%@`", [propertyExpectation.mapping class]];
                 NSString *reason = [NSString stringWithFormat:@"expected to %@, but instead of a `RKRelationshipMapping` got a `%@`",
                                     expectation, [propertyExpectation.mapping class]];
-                if (error) *error = [self errorForExpectation:expectation
-                                                     withCode:RKMappingTestMappingMismatchError
-                                                     userInfo:userInfo
-                                                  description:description
-                                                       reason:reason];
+                if (error) {
+                    *error = [self errorForExpectation:expectation
+                                              withCode:RKMappingTestMappingMismatchError
+                                              userInfo:userInfo
+                                           description:description
+                                                reason:reason];
+                }
                 
                 // Error message here that a relationship was not mapped!!!
                 return NO;
@@ -371,7 +400,7 @@ NSString * const RKMappingTestVerificationFailureException = @"RKMappingTestVeri
     // Ensure repeated invocations of verify only result in a single mapping operation
     if (! self.hasPerformedMapping) {
         id sourceObject = self.rootKeyPath ? [self.sourceObject valueForKeyPath:self.rootKeyPath] : self.sourceObject;
-        RKMappingOperation *mappingOperation = [[RKMappingOperation alloc] initWithSourceObject:sourceObject destinationObject:self.destinationObject mapping:self.mapping];
+        RKMappingOperation *mappingOperation = [[RKMappingOperation alloc] initWithSourceObject:sourceObject destinationObject:self.destinationObject mapping:self.mapping metadataList:self.metadataList];
         id<RKMappingOperationDataSource> dataSource = [self dataSourceForMappingOperation:mappingOperation];
         mappingOperation.dataSource = dataSource;
         mappingOperation.delegate = self;
