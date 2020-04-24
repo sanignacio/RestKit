@@ -721,7 +721,7 @@ static void AFRKNetworkReachabilityReleaseCallback(const void *info) {
 }
 
 - (id)initWithCoder:(NSCoder *)aDecoder {
-    NSURL *baseURL = [aDecoder decodeObjectOfClass:[NSURL class] forKey::@"baseURL"];
+    NSURL *baseURL = [aDecoder decodeObjectOfClass:[NSURL class] forKey:@"baseURL"];
 
     self = [self initWithBaseURL:baseURL];
     if (!self) {
@@ -730,8 +730,8 @@ static void AFRKNetworkReachabilityReleaseCallback(const void *info) {
 
     self.stringEncoding = [aDecoder decodeIntegerForKey:@"stringEncoding"];
     self.parameterEncoding = (AFRKHTTPClientParameterEncoding) [aDecoder decodeIntegerForKey:@"parameterEncoding"];
-    self.registeredHTTPOperationClassNames = [aDecoder decodeObjectOfClass:[NSMutableArray class] forKey::@"registeredHTTPOperationClassNames"];
-    self.defaultHeaders = [aDecoder decodeObjectOfClass:[NSMutableDictionary class] forKey::@"defaultHeaders"];
+    self.registeredHTTPOperationClassNames = [aDecoder decodeObjectOfClass:[NSMutableArray class] forKey:@"registeredHTTPOperationClassNames"];
+    self.defaultHeaders = [aDecoder decodeObjectOfClass:[NSMutableDictionary class] forKey:@"defaultHeaders"];
 
     return self;
 }
