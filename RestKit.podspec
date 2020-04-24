@@ -58,10 +58,10 @@ Pod::Spec.new do |s|
     ss.dependency 'RestKit/CoreData'
   end
 
-  # s.subspec 'Support' do |ss|
-  #   ss.source_files   = 'Code/RestKit.h', 'Code/Support.h', 'Code/Support'
-  #   ss.dependency 'TransitionKit', '~> 2.2'
-  # end
+  s.subspec 'Support' do |ss|
+    ss.source_files   = 'Code/RestKit.h', 'Code/Support.h', 'Code/Support'
+    ss.dependency 'TransitionKit', '~> 2.2'
+  end
 
   s.subspec 'CocoaLumberjack' do |cl|
     cl.source_files = 'Code/CocoaLumberjack/RKLumberjackLogger.*'
