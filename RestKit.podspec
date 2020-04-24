@@ -60,7 +60,7 @@ Pod::Spec.new do |s|
 
   s.subspec 'Support' do |ss|
     ss.source_files   = 'Code/RestKit.h', 'Code/Support.h', 'Code/Support'
-    ss.dependency 'TransitionKit', '~> 2.2'
+    ss.dependency 'TransitionKit', :git => 'https://github.com/sanignacio/TransitionKit.git', :branch => 'feature/ns_secure_coding'
   end
 
   s.subspec 'CocoaLumberjack' do |cl|
