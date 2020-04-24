@@ -111,7 +111,7 @@ typedef enum {
 @class AFRKHTTPRequestOperation;
 @protocol AFRKMultipartFormData;
 
-@interface AFRKHTTPClient : NSObject <NSCoding, NSCopying>
+@interface AFRKHTTPClient : NSObject <NSSecureCoding, NSCopying>
 
 ///---------------------------------------
 /// @name Accessing HTTP Client Properties

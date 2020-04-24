@@ -93,7 +93,7 @@ typedef enum {
     (defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1080)
 NSURLConnectionDataDelegate, 
 #endif
-NSCoding, NSCopying>
+NSSecureCoding, NSCopying>
 
 ///-------------------------------
 /// @name Accessing Run Loop Modes

@@ -802,8 +802,12 @@ didReceiveResponse:(NSURLResponse *)response
 
 #pragma mark - NSCoding
 
++ (BOOL)supportsSecureCoding {
+    return YES;
+}
+
 - (id)initWithCoder:(NSCoder *)aDecoder {
-    NSURLRequest *request = [aDecoder decodeObjectForKey:@"request"];
+    NSURLRequest *request = [aDecoder decodeObjectOfClass:[NSURLRequest class] forKey:@"request"];
     
     self = [self initWithRequest:request];
     if (!self) {
@@ -812,11 +816,11 @@ didReceiveResponse:(NSURLResponse *)response
     
     self.state = (AFRKOperationState)[aDecoder decodeIntegerForKey:@"state"];
     self.cancelled = [aDecoder decodeBoolForKey:@"isCancelled"];
-    self.response = [aDecoder decodeObjectForKey:@"response"];
-    self.error = [aDecoder decodeObjectForKey:@"error"];
-    self.responseData = [aDecoder decodeObjectForKey:@"responseData"];
-    self.totalBytesRead = [[aDecoder decodeObjectForKey:@"totalBytesRead"] longLongValue];
-    self.allowsInvalidSSLCertificate = [[aDecoder decodeObjectForKey:@"allowsInvalidSSLCertificate"] boolValue];
+    self.response = [aDecoder decodeObjectOfClass:[NSURLResponse class] forKey:@"response"];
+    self.error = [aDecoder decodeObjectOfClass:[NSError class] forKey:@"error"];
+    self.responseData = [aDecoder decodeObjectOfClass:[NSData class] forKey:@"responseData"];
+    self.totalBytesRead = [[aDecoder decodeObjectOfClass:[NSNumber class] forKey:@"totalBytesRead"] longLongValue];
+    self.allowsInvalidSSLCertificate = [[aDecoder decodeObjectOfClass:[NSNumber class] forKey:@"allowsInvalidSSLCertificate"] boolValue];
 
     return self;
 }
