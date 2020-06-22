@@ -227,7 +227,11 @@ static char RKManagedObjectContextChangeMergingObserverAssociationKey;
 {
     if (! self.persistentStoreCoordinator) [self createPersistentStoreCoordinator];
 
-    return [self.persistentStoreCoordinator addPersistentStoreWithType:NSInMemoryStoreType configuration:nil URL:nil options:nil error:error];
+    return [self.persistentStoreCoordinator addPersistentStoreWithType:NSInMemoryStoreType
+                                                         configuration:nil
+                                                                   URL:nil
+                                                               options:@{ NSPersistentStoreFileProtectionKey: NSFileProtectionComplete }
+                                                                 error:error];
 }
 
 - (NSPersistentStore *)addSQLitePersistentStoreAtPath:(NSString *)storePath
@@ -262,7 +266,11 @@ static char RKManagedObjectContextChangeMergingObserverAssociationKey;
      http://blog.atwam.com/blog/2012/05/11/multiple-persistent-stores-and-seed-data-with-core-data/
      http://stackoverflow.com/questions/1774359/core-data-migration-error-message-model-does-not-contain-configuration-xyz
      */    
-    NSPersistentStore *persistentStore = [self.persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:options error:error];
+    NSPersistentStore *persistentStore = [self.persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType
+                                                                                       configuration:nil
+                                                                                                 URL:storeURL
+                                                                                             options:options
+                                                                                               error:error];
     if (! persistentStore) return nil;
     if (! [self.persistentStoreCoordinator removePersistentStore:persistentStore error:error]) return nil;
 
