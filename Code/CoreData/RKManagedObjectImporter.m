@@ -128,7 +128,8 @@
     NSPersistentStore *persistentStore = [persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType
                                                                                   configuration:nil
                                                                                             URL:storeURL
-                                                                                        options:nil error:error];
+                                                                                        options:@{ NSPersistentStoreFileProtectionKey: NSFileProtectionComplete }
+                                                                                          error:error];
     if (! persistentStore) {
         return nil;
     }
