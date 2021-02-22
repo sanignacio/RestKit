@@ -574,6 +574,7 @@ static NSString *RKMIMETypeFromAFHTTPClientParameterEncoding(AFRKHTTPClientParam
     operation.allowsInvalidSSLCertificate = self.HTTPClient.allowsInvalidSSLCertificate;
 #ifdef _AFRKNETWORKING_PIN_SSL_CERTIFICATES_
     operation.SSLPinningMode = self.HTTPClient.defaultSSLPinningMode;
+    operation.validationDelegate = self.HTTPClient.validationDelegate;
 #endif
 }
 

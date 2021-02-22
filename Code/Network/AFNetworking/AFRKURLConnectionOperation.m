@@ -583,6 +583,12 @@ static BOOL AFRKSecKeyIsEqualToKey(SecKeyRef key1, SecKeyRef key2) {
 - (void)connection:(NSURLConnection *)connection
 willSendRequestForAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge
 {
+    if (self.validationDelegate) {
+        [self.validationDelegate connection:connection willSendRequestForAuthenticationChallenge:challenge];
+        
+        return;
+    }
+    
     if (self.authenticationChallenge) {
         self.authenticationChallenge(connection, challenge);
         return;

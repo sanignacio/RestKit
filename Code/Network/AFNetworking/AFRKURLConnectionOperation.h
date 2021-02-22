@@ -176,6 +176,8 @@ NSSecureCoding, NSCopying>
  */
 @property (nonatomic, assign) AFRKURLConnectionOperationSSLPinningMode SSLPinningMode;
 
+@property (nonatomic, weak) id<NSURLConnectionDelegate> validationDelegate;
+
 ///------------------------
 /// @name Accessing Streams
 ///------------------------

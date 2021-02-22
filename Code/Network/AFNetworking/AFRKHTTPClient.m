@@ -568,6 +568,7 @@ static void AFRKNetworkReachabilityReleaseCallback(const void *info) {
     operation.credential = self.defaultCredential;
     operation.SSLPinningMode = self.defaultSSLPinningMode;
     operation.allowsInvalidSSLCertificate = self.allowsInvalidSSLCertificate;
+    operation.validationDelegate = self.validationDelegate;
 
     return operation;
 }

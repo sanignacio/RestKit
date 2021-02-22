@@ -153,6 +153,8 @@ typedef enum {
  */
 @property (nonatomic, assign) AFRKURLConnectionOperationSSLPinningMode defaultSSLPinningMode;
 
+@property (nonatomic, weak) id<NSURLConnectionDelegate> validationDelegate;
+
 /**
  Whether each `AFHTTPRequestOperation` created by `HTTPRequestOperationWithRequest:success:failure:` should accept an invalid SSL certificate.
  
